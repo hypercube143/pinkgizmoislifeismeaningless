@@ -4,6 +4,8 @@ import json
 import datetime
 import os
 from zoneinfo import ZoneInfo
+import weird_ai as evil_ai
+import random
 
 TIME_ZONE = "Pacific/Auckland" # "Antarctica/McMurdo"
 
@@ -15,6 +17,9 @@ DATA_DIR = f"{API_DIR}/data"
 os.makedirs(DATA_DIR, exist_ok=True)
 COUNTS_DIR = f"{DATA_DIR}/counts"
 os.makedirs(COUNTS_DIR, exist_ok=True)
+
+ORACLE_DIR = f"{DATA_DIR}/oracle"
+os.makedirs(ORACLE_DIR, exist_ok=True)
 
 app = Flask(__name__)
 CORS(app)
@@ -29,13 +34,21 @@ def time_elapsed(now_timestamp, start_timestmap, dt_expected):
     return (now_timestamp - start_timestmap) >= dt_expected
 
 
+def get_config_value(key):
+    with open(f"{DATA_DIR}/config.json", "r") as f:
+        value = json.loads(f.read())[key]
+    return value
+
+
 # Create counter object
 @app.route("/counter/create", methods=['POST'])
 def count_create():
     name = request.args.get("name")
     p = request.args.get("key")
-    if p != PASSWORD:
+
+    if p != get_config_value("admin-password"):
         return {"res": "You clearly have a lot of free time. Go do something productive :p"}
+    
     time_now = datetime.datetime.now()
     time_now_timestamp = time_now.timestamp()
 
@@ -184,5 +197,85 @@ def count_get():
     res = jsonify(final_data)
     res.headers.add('Access-Control-Allow-Origin', '*')
     return res, 200
+
+
+@app.route("/oracle/y-o-n", methods=["POST", "GET"])
+def oracle_y_o_n():
+    time_now = datetime.datetime.now()
+    tsn = time_now.timestamp() # timestamp now
+    query = request.args.get("query")
+
+    print(query)
+
+    with open(f"{ORACLE_DIR}/y-o-n.json", "r") as f:
+        data = json.loads(f.read())
+
+    # remove all cached questions that have expired
+    expire_time = 86400 # 86400 # 1 day (to prevent cached questions from flooding the server)
+    to_remove = []
+    for q in data:
+        if time_elapsed(tsn, q["ts"], expire_time):
+            to_remove.append(q)
+    for r in to_remove:
+        data.remove(r)
+
+    # add question-mark to query & remove trailing whitespace if not already to help the silly ai
+    query = query.strip()
+    if not query.endswith("?"):
+        query += "?"
+    
+    # do ai thing here
+    gemini_key = get_config_value("gemini-api-key")
+    o_b = "{"
+    c_b = "}"
+    full_prompt = f"""
+    you are to determine whether a question is a yes or no question, and whether it exists in the list below (by semantic meaning)
+
+    your response must be in a json format like so:
+    {o_b}"cached": true, "valid": true, "yes-or-no": true{c_b}
+    this is an example of a query which is:
+    cached: in the list 
+    valid: is a valid yes or no question
+    yes-or-no: is true in the list (true=yes, false=no)
+
+    extra notes:
+    - you must retain logical consistency: if the user asks if the sky is red and a cached query asks if the sky was blue and the result was yes, then the sky cannot be red
+      if you encounter a question that asks of the opposite of a cached question, your response must be the opposite of its yes-or-no value
+      thus, any 'reverse' question / related negative question should count as being cached
+    - your final output MUST only contain json
+
+    QUERY: "{query}"
+
+    LIST: {[{"query": x["q"], "yes-or-no": x["yn"]}for x in data]}
+    """
+    res = evil_ai.prompt(full_prompt, "gemini-2.0-flash", gemini_key)
+    # if res.startswith("```json"):
+    res = res.replace("```json", "")
+    # if res.endswith("```"):
+    res = res.replace("```", "") # this will cause errors if user query contains ``` etc :c
+    print(res)
+
+    res_json = json.loads(res)
+
+    # valid question, not cached
+    if res_json["valid"] and not res_json["cached"]:
+        fate = random.choice(["yes", "no"])
+        data.append({"q": query, "ts": tsn, "yn": fate})
+        with open(f"{ORACLE_DIR}/y-o-n.json", "w") as f:
+            json.dump(data, f, indent=4)
+        return jsonify({"fate": fate}), 200
+    
+    # valid question, cached
+    elif res_json["valid"] and res_json["cached"]:
+        fate = "yes" if res_json["yes-or-no"] else "no"
+        return jsonify({"fate": fate}), 200
+
+    # invalid question
+    elif not res_json["valid"]:
+        return jsonify({"res": "not a yes or no question"}), 400
+
+
+   
+
 
 app.run()
