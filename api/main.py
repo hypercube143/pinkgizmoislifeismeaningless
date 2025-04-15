@@ -103,9 +103,16 @@ def count_create():
 def update_counter(name, amount=1):
     time_now = datetime.datetime.now()
     tsn = time_now.timestamp() # timestamp now
-
+    
     with open(f"{COUNTS_DIR}/{name}.json", "r") as f:
-         data = json.loads(f.read())
+        content = f.read()
+
+    try:
+        data = json.loads(content)
+    except json.decoder.JSONDecodeError:
+        # sometimes an extra } is added to the end of this file... whyyy
+        fixed_content = content[:-1]
+        data = json.loads(fixed_content)
 
     data["count"] += amount
     # amount 0 is used only for updating reset times and reset values
