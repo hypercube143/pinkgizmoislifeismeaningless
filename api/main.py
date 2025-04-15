@@ -1,10 +1,13 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 import json
 import datetime
 import os
 from zoneinfo import ZoneInfo
 
 TIME_ZONE = "Pacific/Auckland" # "Antarctica/McMurdo"
+
+PASSWORD = "erm"
 
 API_DIR = "api"
 os.makedirs(API_DIR, exist_ok=True)
@@ -14,6 +17,7 @@ COUNTS_DIR = f"{DATA_DIR}/counts"
 os.makedirs(COUNTS_DIR, exist_ok=True)
 
 app = Flask(__name__)
+CORS(app)
 
 # Main page. Documentation should be displayed here if ever
 @app.route("/")
@@ -29,6 +33,9 @@ def time_elapsed(now_timestamp, start_timestmap, dt_expected):
 @app.route("/counter/create", methods=['POST'])
 def count_create():
     name = request.args.get("name")
+    p = request.args.get("key")
+    if p != PASSWORD:
+        return {"res": "You clearly have a lot of free time. Go do something productive :p"}
     time_now = datetime.datetime.now()
     time_now_timestamp = time_now.timestamp()
 
@@ -72,8 +79,12 @@ def count_create():
                 }
             json.dump(data, f, indent=4)
     except FileExistsError:
-        return {"res": f"'{name}' counter already exists"}, 418
-    return {"res": f"'{name}' counter successfully created"}, 200
+        res = jsonify({"res": f"'{name}' counter already exists"})
+        res.headers.add('Access-Control-Allow-Origin', '*')
+        return res, 418
+    res = jsonify({"res": f"'{name}' counter successfully created"})
+    res.headers.add('Access-Control-Allow-Origin', '*')
+    return res, 200
 
 
 def update_counter(name, amount=1):
@@ -133,15 +144,19 @@ def count_heartbeat():
     try:
         update_counter(name, 1)
     except FileNotFoundError:
-        return {"res": f"'{name}' counter does not exist"}, 404
-    return {"res": f"heart beat for '{name}'"}
+        res = jsonify({"res": f"'{name}' counter does not exist"})
+        res.headers.add('Access-Control-Allow-Origin', '*')
+        return res, 404
+    res = jsonify({"res": f"heart beat for '{name}'"})
+    res.headers.add('Access-Control-Allow-Origin', '*')
+    return res, 200
 
 
 @app.route("/counter/get", methods=["GET"])
 def count_get():
     names = request.args.get("names")
 
-    final_data = []
+    final_data = {}
     
     try:
         for name in names.split(","):
@@ -149,7 +164,6 @@ def count_get():
             with open(f"{COUNTS_DIR}/{name}.json", "r") as f:
                 data = json.loads(f.read())
             trimmed_data = {
-                "name": name,
                 "timestamp-last-count": data["timestamp-last-count"],
                 "timestamp-created": data["timestamp-created"],
                 "count": data["count"],
@@ -161,10 +175,14 @@ def count_get():
                 "count-month-6": data["count-month-6"],
                 "count-year": data["count-year"]
             }
-            final_data.append(trimmed_data)
+            final_data[name] = trimmed_data
 
     except FileNotFoundError:
-        return {"res": f"'{name}' counter does not exist"}, 404
-    return final_data, 200
+        res = jsonify({"res": f"'{name}' counter does not exist"})
+        res.headers.add('Access-Control-Allow-Origin', '*')
+        return res, 404
+    res = jsonify(final_data)
+    res.headers.add('Access-Control-Allow-Origin', '*')
+    return res, 200
 
 app.run()

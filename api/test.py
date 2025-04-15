@@ -30,4 +30,6 @@ while True:
         pc(post("/counter/heartbeat?name=bingus"))
     if fun == "k":
         pc(get("/counter/get?names=bingus,bongus"))
+    if fun.startswith("c"):
+        pc(post(f"/counter/create?name={fun.split( )[1]}&key=erm"))
     
