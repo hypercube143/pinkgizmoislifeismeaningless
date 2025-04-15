@@ -1,0 +1,20 @@
+{
+    "name": "bongus",
+    "timestamp-last-count": 1744689029.10923,
+    "timestamp-created": 1744687963.122149,
+    "count": 44,
+    "count-minute": 0,
+    "timestamp-cm-last-reset": 1744689081.435113,
+    "count-hour": 44,
+    "timestamp-ch-last-reset": 1744686000.0,
+    "count-day": 44,
+    "timestamp-cd-last-reset": 1744632000.0,
+    "count-week": 44,
+    "timestamp-cw-last-reset": 1744545600.0,
+    "count-month": 44,
+    "timestamp-cmo-last-reset": 1743418800.0,
+    "count-month-6": 44,
+    "timestamp-cmo6-last-reset": 1735642800.0,
+    "count-year": 44,
+    "timestamp-cy-last-reset": 1735642800.0
+}

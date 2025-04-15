@@ -1,0 +1,20 @@
+{
+    "name": "bingus",
+    "timestamp-last-count": 1744689014.909533,
+    "timestamp-created": 1744686466.856081,
+    "count": 34,
+    "count-minute": 0,
+    "timestamp-cm-last-reset": 1744689030.190299,
+    "count-hour": 34,
+    "timestamp-ch-last-reset": 1744686000.0,
+    "count-day": 34,
+    "timestamp-cd-last-reset": 1744632000.0,
+    "count-week": 34,
+    "timestamp-cw-last-reset": 1744545600.0,
+    "count-month": 34,
+    "timestamp-cmo-last-reset": 1743418800.0,
+    "count-month-6": 34,
+    "timestamp-cmo6-last-reset": 1735642800.0,
+    "count-year": 34,
+    "timestamp-cy-last-reset": 1735642800.0
+}
