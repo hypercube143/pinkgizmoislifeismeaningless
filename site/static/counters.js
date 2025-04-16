@@ -25,23 +25,23 @@ window.addEventListener("load", function () {
 
         // inital update for counters before the x second mark
         updateCounters();
-    });
+});
     
-    // update page
-    function updateCounters() {
-        fetch(API_URL + "/counter/get?names=pgilim-visited", {
-            method: "GET",
-            // mode: 'no-cors',
-            // headers: {
-            //     "Content-Type": "application/json"
-            // }
-        })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById("visited-count-text").innerText = "total visits: " + evilThousandsFormatter(data["pgilim-visited"]['count']) + "!!!";
-        })
-        .catch(error => console.error("Error in GET request:", error));
-    }
+// update page
+function updateCounters() {
+    fetch(API_URL + "/counter/get?names=pgilim-visited", {
+        method: "GET",
+        // mode: 'no-cors',
+        // headers: {
+        //     "Content-Type": "application/json"
+        // }
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById("visited-count-text").innerText = "total visits: " + evilThousandsFormatter(data["pgilim-visited"]['count']) + "!!!";
+    })
+    .catch(error => console.error("Error in GET request:", error));
+}
 
 
 // update visited status (soon to be more counters) every 5 seconds

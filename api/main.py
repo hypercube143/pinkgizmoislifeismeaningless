@@ -6,20 +6,7 @@ import os
 from zoneinfo import ZoneInfo
 import weird_ai as evil_ai
 import random
-
-TIME_ZONE = "Pacific/Auckland" # "Antarctica/McMurdo"
-
-PASSWORD = "erm"
-
-API_DIR = "api"
-os.makedirs(API_DIR, exist_ok=True)
-DATA_DIR = f"{API_DIR}/data"
-os.makedirs(DATA_DIR, exist_ok=True)
-COUNTS_DIR = f"{DATA_DIR}/counts"
-os.makedirs(COUNTS_DIR, exist_ok=True)
-
-ORACLE_DIR = f"{DATA_DIR}/oracle"
-os.makedirs(ORACLE_DIR, exist_ok=True)
+from evil_util import *
 
 app = Flask(__name__)
 CORS(app)
@@ -30,17 +17,6 @@ def index():
     return render_template("index.html"), 200
 
 
-def time_elapsed(now_timestamp, start_timestmap, dt_expected):
-    return (now_timestamp - start_timestmap) >= dt_expected
-
-
-def get_config_value(key):
-    with open(f"{DATA_DIR}/config.json", "r") as f:
-        value = json.loads(f.read())[key]
-    return value
-
-
-# Create counter object
 @app.route("/counter/create", methods=['POST'])
 def count_create():
     name = request.args.get("name")
@@ -239,11 +215,12 @@ def oracle_y_o_n():
     you are to determine whether a question is a yes or no question, and whether it exists in the list below (by semantic meaning)
 
     your response must be in a json format like so:
-    {o_b}"cached": true, "valid": true, "yes-or-no": true{c_b}
+    {o_b}"cached": true, "valid": true{c_b}
     this is an example of a query which is:
     cached: in the list 
     valid: is a valid yes or no question
-    yes-or-no: is true in the list (true=yes, false=no)
+
+    if cached, return an extra parameter "index" which is equal to the index of the cached query from the list that best matches the current query
 
     extra notes:
     - you must retain logical consistency: if the user asks if the sky is red and a cached query asks if the sky was blue and the result was yes, then the sky cannot be red
@@ -274,7 +251,11 @@ def oracle_y_o_n():
     
     # valid question, cached
     elif res_json["valid"] and res_json["cached"]:
-        fate = "yes" if res_json["yes-or-no"] else "no"
+        # update ts
+        data[res_json["index"]]["ts"] = tsn
+        with open(f"{ORACLE_DIR}/y-o-n.json", "w") as f:
+            json.dump(data, f, indent=4)
+        fate = data[res_json["index"]]["yn"]
         return jsonify({"fate": fate}), 200
 
     # invalid question
@@ -282,7 +263,38 @@ def oracle_y_o_n():
         return jsonify({"res": "not a yes or no question"}), 400
 
 
-   
+@app.route("/status/update", methods=["POST", "GET"])
+def status_update():
+    headers = request.headers
+    data = json.loads(request.data)
+
+    print(headers)
+    print(data)
+
+    if headers["key"] != get_config_value("admin-password"):
+        return jsonify({"res": "you cannot do that :p"}), 403
+    
+    time_now = datetime.datetime.now()
+    tsn = time_now.timestamp() # timestamp now
+    
+    with open(f"{STATUS_DIR}/current-status.json", "w") as f:
+        new_data = {
+            "status-id": data["status-id"],
+            "status-message": data["status-message"],
+            "timestamp": tsn
+        }
+        json.dump(new_data, f, indent=4)
+
+    return jsonify({"res": "successfully updated status :p"})
+
+
+@app.route("/status/get", methods=["GET"])
+def status_get():
+
+    with open(f"{STATUS_DIR}/current-status.json", "r", encoding="utf-8") as f:
+        data = json.loads(f.read())
+    
+    return data, 200
 
 
 app.run()

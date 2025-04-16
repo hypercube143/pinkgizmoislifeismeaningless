@@ -3,5 +3,30 @@
         "q": "are aliens real?",
         "ts": 1744755342.761814,
         "yn": "no"
+    },
+    {
+        "q": "does it have eyes?",
+        "ts": 1744760293.45121,
+        "yn": "no"
+    },
+    {
+        "q": "a yes or no question?",
+        "ts": 1744760341.010601,
+        "yn": "no"
+    },
+    {
+        "q": "will roko's basilisk become a thing?",
+        "ts": 1744760421.928521,
+        "yn": "no"
+    },
+    {
+        "q": "will we ever go to the moon again?",
+        "ts": 1744760493.425604,
+        "yn": "yes"
+    },
+    {
+        "q": "will ai take over the world?",
+        "ts": 1744761404.104754,
+        "yn": "yes"
     }
 ]

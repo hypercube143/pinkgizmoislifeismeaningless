@@ -1,5 +1,6 @@
 import requests
 import json
+from evil_util import *
 
 URL = "http://127.0.0.1:5000"
 
@@ -22,14 +23,33 @@ def pc(req): # print content
 
 # pc(get("/counter/get?names=bingus,bongus"))
 
-while True:
-    fun = input("")
-    if fun == "h":
-        pc(post("/counter/heartbeat?name=bongus"))
-    if fun == "j":
-        pc(post("/counter/heartbeat?name=bingus"))
-    if fun == "k":
-        pc(get("/counter/get?names=bingus,bongus"))
-    if fun.startswith("c"):
-        pc(post(f"/counter/create?name={fun.split( )[1]}&key=erm"))
+# while True:
+#     fun = input("")
+#     if fun == "h":
+#         pc(post("/counter/heartbeat?name=bongus"))
+#     if fun == "j":
+#         pc(post("/counter/heartbeat?name=bingus"))
+#     if fun == "k":
+#         pc(get("/counter/get?names=bingus,bongus"))
+#     if fun.startswith("c"):
+#         pc(post(f"/counter/create?name={fun.split( )[1]}&key=erm"))
+
+
+# r = requests.post(
+#     f"{URL}/status/update",
+#     headers={
+#         "key": ""
+#     },
+#     data=json.dumps(
+#         {
+#             "status-message": "cooking conspiracies",
+#             "status-id": 1
+#         }
+#     )
+# )
+#
+# print(r.content)
+
+r = requests.get(f"{URL}/status/get")
+print(r.content)
     
